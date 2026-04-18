@@ -1,0 +1,9 @@
+{
+  "course_id": "Trees",
+  "documents_ingested": 1,
+  "total_units_processed": 88,
+  "total_chunks_created": 88,
+  "formula_heavy_units": 4,
+  "sparse_or_image_heavy_units": 36,
+  "warnings": []
+}

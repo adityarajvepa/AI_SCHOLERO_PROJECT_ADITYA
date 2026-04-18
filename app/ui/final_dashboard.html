@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scholera — Local dashboard</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --surface2: #243044;
+      --border: #2d3a4f;
+      --text: #e8edf4;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent2: #818cf8;
+      --success: #34d399;
+      --danger: #f87171;
+      --radius: 12px;
+      --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: linear-gradient(160deg, #0c1220 0%, var(--bg) 40%, #111827 100%);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+    header {
+      margin-bottom: 2rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 {
+      margin: 0 0 0.35rem;
+      font-size: 1.65rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    header p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+    .badge {
+      display: inline-block;
+      margin-top: 0.75rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: var(--surface2);
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+    .grid {
+      display: grid;
+      gap: 1.25rem;
+    }
+    @media (min-width: 900px) {
+      .grid { grid-template-columns: repeat(3, 1fr); align-items: start; }
+    }
+    section.card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.35rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    }
+    section.card h2 {
+      margin: 0 0 1rem;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    section.card h2 span.icon {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      opacity: 0.9;
+      flex-shrink: 0;
+    }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+    input[type="text"], input[type="number"], select, textarea {
+      width: 100%;
+      padding: 0.55rem 0.65rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+    textarea { min-height: 100px; resize: vertical; }
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid rgba(56, 189, 248, 0.35);
+      border-color: var(--accent);
+    }
+    input[type="file"] {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .field { margin-bottom: 1rem; }
+    .row2 { display: grid; gap: 0.75rem; }
+    @media (min-width: 480px) { .row2 { grid-template-columns: 1fr 1fr; } }
+    button.btn {
+      appearance: none;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, #0ea5e9, var(--accent2));
+      color: #fff;
+      width: 100%;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    button.btn:hover:not(:disabled) { opacity: 0.95; transform: translateY(-1px); }
+    button.btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+    button.btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .alert {
+      border-radius: 8px;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.88rem;
+      margin-top: 0.75rem;
+      display: none;
+    }
+    .alert.show { display: block; }
+    .alert.err { background: rgba(248, 113, 113, 0.12); border: 1px solid rgba(248, 113, 113, 0.35); color: #fecaca; }
+    .alert.ok { background: rgba(52, 211, 153, 0.12); border: 1px solid rgba(52, 211, 153, 0.35); color: #a7f3d0; }
+    .alert.info { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: #bae6fd; }
+    .summary-box {
+      margin-top: 0.75rem;
+      padding: 0.85rem;
+      border-radius: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+      display: none;
+    }
+    .summary-box.show { display: block; }
+    .summary-box dl {
+      margin: 0;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.25rem 1rem;
+    }
+    .summary-box dt { color: var(--muted); }
+    .summary-box dd { margin: 0; }
+    .stats-display {
+      font-size: 0.85rem;
+      max-height: 320px;
+      overflow: auto;
+      padding: 0.75rem;
+      background: var(--bg);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      white-space: pre-wrap;
+      word-break: break-word;
+      display: none;
+    }
+    .stats-display.show { display: block; }
+    .empty-hint {
+      color: var(--muted);
+      font-size: 0.88rem;
+      padding: 0.75rem;
+      text-align: center;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+    }
+    .answer-box {
+      padding: 0.85rem;
+      background: var(--bg);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      display: none;
+    }
+    .answer-box.show { display: block; }
+    .citations ul { margin: 0.35rem 0 0; padding-left: 1.1rem; }
+    .citations li { margin: 0.25rem 0; }
+    details.debug {
+      margin-top: 0.75rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      overflow: hidden;
+    }
+    details.debug summary {
+      cursor: pointer;
+      padding: 0.6rem 0.85rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    details.debug summary::-webkit-details-marker { display: none; }
+    details.debug[open] summary { border-bottom: 1px solid var(--border); }
+    .debug-inner {
+      padding: 0.75rem;
+      font-size: 0.78rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+      max-height: 360px;
+      overflow: auto;
+      color: #cbd5e1;
+    }
+    .debug-chunk {
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .debug-chunk:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .spinner {
+      display: inline-block;
+      width: 1em;
+      height: 1em;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 0.35rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .full-span { grid-column: 1 / -1; }
+    .quiz-card {
+      margin-top: 1rem;
+      padding: 1rem 1.1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .quiz-card h3 { margin: 0 0 0.5rem; font-size: 1rem; font-weight: 600; }
+    .quiz-meta { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.5rem; }
+    .quiz-answer { margin-top: 0.65rem; padding: 0.55rem 0.65rem; border-radius: 6px; background: var(--surface2); font-size: 0.88rem; }
+    .quiz-cites { margin-top: 0.5rem; font-size: 0.82rem; color: var(--muted); }
+    #quiz-out { margin-top: 0.75rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Scholera local dashboard</h1>
+      <p>Ingest course materials, inspect corpus stats, and ask grounded questions — all against your running API.</p>
+      <span class="badge">GET /finalUI</span>
+    </header>
+
+    <div class="grid">
+      <section class="card" id="panel-ingest">
+        <h2><span class="icon" aria-hidden="true"></span> Ingest materials</h2>
+        <form id="form-ingest">
+          <div class="field">
+            <label for="ingest-course">Course code</label>
+            <input type="text" id="ingest-course" placeholder="e.g. CS101 or ml-spring-26" autocomplete="off" required />
+          </div>
+          <div class="field">
+            <label for="ingest-files">Files (PDF, PPTX, …)</label>
+            <input type="file" id="ingest-files" multiple required />
+          </div>
+          <button type="submit" class="btn" id="btn-ingest">Upload &amp; ingest</button>
+        </form>
+        <div class="alert err" id="ingest-err"></div>
+        <div class="alert ok" id="ingest-ok"></div>
+        <div class="summary-box" id="ingest-summary"></div>
+      </section>
+
+      <section class="card" id="panel-stats">
+        <h2><span class="icon" aria-hidden="true"></span> Course stats</h2>
+        <div class="field">
+          <label for="stats-course">Course</label>
+          <select id="stats-course"><option value="">— Select a course —</option></select>
+        </div>
+        <button type="button" class="btn btn-secondary" id="btn-stats">Load stats</button>
+        <div class="alert err" id="stats-err"></div>
+        <div id="stats-empty" class="empty-hint" style="display:none;">No indexed courses yet. Ingest at least one document to populate this list.</div>
+        <pre class="stats-display" id="stats-display" aria-live="polite"></pre>
+      </section>
+
+      <section class="card" id="panel-ask">
+        <h2><span class="icon" aria-hidden="true"></span> Ask a question</h2>
+        <form id="form-ask">
+          <div class="field">
+            <label for="ask-course">Course</label>
+            <select id="ask-course" required><option value="">— Select a course —</option></select>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="ask-topk">top_k (optional)</label>
+              <input type="number" id="ask-topk" min="1" max="50" value="8" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="ask-q">Question</label>
+            <textarea id="ask-q" placeholder="Ask something grounded in the materials…" required></textarea>
+          </div>
+          <button type="submit" class="btn" id="btn-ask">Ask</button>
+        </form>
+        <div class="alert err" id="ask-err"></div>
+        <div class="answer-box" id="ask-answer"></div>
+        <div class="citations" id="ask-cites" style="margin-top:0.75rem;display:none;"></div>
+        <details class="debug" id="ask-debug-wrap">
+          <summary>Retrieval debug <span style="font-weight:400;color:var(--muted);">(hidden by default)</span></summary>
+          <div class="debug-inner" id="ask-debug"></div>
+        </details>
+      </section>
+
+      <section class="card full-span" id="panel-quiz">
+        <h2><span class="icon" aria-hidden="true"></span> Quiz generator</h2>
+        <p style="margin:0 0 1rem;font-size:0.88rem;color:var(--muted);">Build short quizzes from already ingested chunks (Gemini + hybrid retrieval). No re-ingestion.</p>
+        <form id="form-quiz">
+          <div class="row2">
+            <div class="field">
+              <label for="quiz-course">Course</label>
+              <select id="quiz-course" required><option value="">— Select a course —</option></select>
+            </div>
+            <div class="field">
+              <label for="quiz-num">Number of questions</label>
+              <input type="number" id="quiz-num" min="1" max="20" value="5" />
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="quiz-topic">Topic (optional)</label>
+              <input type="text" id="quiz-topic" placeholder="e.g. clustering" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label for="quiz-diff">Difficulty</label>
+              <select id="quiz-diff">
+                <option value="easy">Easy</option>
+                <option value="medium" selected>Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="quiz-topk">top_k</label>
+              <input type="number" id="quiz-topk" min="3" max="30" value="12" />
+            </div>
+            <div class="field" style="display:flex;align-items:flex-end;">
+              <button type="submit" class="btn" id="btn-quiz">Generate quiz</button>
+            </div>
+          </div>
+        </form>
+        <div class="alert err" id="quiz-err"></div>
+        <div class="alert info" id="quiz-msg"></div>
+        <div id="quiz-out"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  const LS_KEY = "scholera_last_course_id";
+
+  function apiBase() {
+    return "";
+  }
+
+  function showEl(el, on) {
+    if (!el) return;
+    if (on) el.classList.add("show");
+    else el.classList.remove("show");
+  }
+
+  function setBusy(btn, busy, labelBusy) {
+    if (!btn) return;
+    btn.disabled = !!busy;
+    if (busy) {
+      btn.dataset._old = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner" aria-hidden="true"></span> ' + (labelBusy || "Working…");
+    } else if (btn.dataset._old) {
+      btn.innerHTML = btn.dataset._old;
+      delete btn.dataset._old;
+    }
+  }
+
+  function hideAlerts() {
+    ["ingest-err", "ingest-ok", "stats-err", "ask-err", "quiz-err"].forEach(function (id) {
+      var n = document.getElementById(id);
+      if (n) { n.classList.remove("show"); n.textContent = ""; }
+    });
+    var qm = document.getElementById("quiz-msg");
+    if (qm) { qm.textContent = ""; qm.classList.remove("show"); }
+  }
+
+  function populateCourseSelects(ids) {
+    var statsSel = document.getElementById("stats-course");
+    var askSel = document.getElementById("ask-course");
+    var quizSel = document.getElementById("quiz-course");
+    if (!ids.length) {
+      try { localStorage.removeItem(LS_KEY); } catch (e) {}
+    }
+    var last = localStorage.getItem(LS_KEY) || "";
+    [statsSel, askSel, quizSel].forEach(function (sel) {
+      if (!sel) return;
+      var keep = sel.value;
+      sel.innerHTML = "";
+      var opt0 = document.createElement("option");
+      opt0.value = "";
+      opt0.textContent = "— Select a course —";
+      sel.appendChild(opt0);
+      ids.forEach(function (id) {
+        var o = document.createElement("option");
+        o.value = id;
+        o.textContent = id;
+        sel.appendChild(o);
+      });
+      if (ids.indexOf(keep) >= 0) sel.value = keep;
+      else if (ids.indexOf(last) >= 0) sel.value = last;
+    });
+    var empty = document.getElementById("stats-empty");
+    if (empty) empty.style.display = ids.length ? "none" : "block";
+  }
+
+  async function refreshCourses(preferId) {
+    var r = await fetch(apiBase() + "/courses");
+    if (!r.ok) throw new Error("Failed to list courses: " + r.status);
+    var data = await r.json();
+    var ids = data.course_ids || [];
+    populateCourseSelects(ids);
+    if (preferId && ids.indexOf(preferId) >= 0) {
+      document.getElementById("stats-course").value = preferId;
+      document.getElementById("ask-course").value = preferId;
+      if (document.getElementById("quiz-course")) document.getElementById("quiz-course").value = preferId;
+      localStorage.setItem(LS_KEY, preferId);
+    }
+    return ids;
+  }
+
+  document.getElementById("stats-course").addEventListener("change", function () {
+    if (this.value) localStorage.setItem(LS_KEY, this.value);
+  });
+  document.getElementById("ask-course").addEventListener("change", function () {
+    if (this.value) localStorage.setItem(LS_KEY, this.value);
+  });
+  document.getElementById("quiz-course").addEventListener("change", function () {
+    if (this.value) localStorage.setItem(LS_KEY, this.value);
+  });
+
+  document.getElementById("form-ingest").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    hideAlerts();
+    var course = document.getElementById("ingest-course").value.trim();
+    var files = document.getElementById("ingest-files").files;
+    if (!course) {
+      document.getElementById("ingest-err").textContent = "Enter a course code.";
+      document.getElementById("ingest-err").classList.add("show");
+      return;
+    }
+    if (!files || !files.length) {
+      document.getElementById("ingest-err").textContent = "Select at least one file.";
+      document.getElementById("ingest-err").classList.add("show");
+      return;
+    }
+    var fd = new FormData();
+    for (var i = 0; i < files.length; i++) fd.append("files", files[i]);
+
+    var btn = document.getElementById("btn-ingest");
+    setBusy(btn, true, "Ingesting…");
+    try {
+      var res = await fetch(apiBase() + "/courses/" + encodeURIComponent(course) + "/ingest", {
+        method: "POST",
+        body: fd
+      });
+      var body = await res.json().catch(function () { return {}; });
+      if (!res.ok) {
+        throw new Error(body.detail ? (typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail)) : res.statusText);
+      }
+      localStorage.setItem(LS_KEY, body.course_id || course);
+      document.getElementById("ingest-ok").textContent = "Ingest completed successfully.";
+      document.getElementById("ingest-ok").classList.add("show");
+      var sum = document.getElementById("ingest-summary");
+      sum.classList.add("show");
+      var warnHtml = "";
+      if (body.warnings && body.warnings.length) {
+        warnHtml = "<p style='margin:0.5rem 0 0;color:#fbbf24'><strong>Warnings</strong></p><ul style='margin:0.25rem 0 0;padding-left:1.2rem'>";
+        body.warnings.forEach(function (w) { warnHtml += "<li>" + escapeHtml(String(w)) + "</li>"; });
+        warnHtml += "</ul>";
+      }
+      sum.innerHTML =
+        "<dl>" +
+        "<dt>Course id</dt><dd>" + escapeHtml(String(body.course_id)) + "</dd>" +
+        "<dt>Documents ingested</dt><dd>" + body.documents_ingested + "</dd>" +
+        "<dt>Units / pages / slides processed</dt><dd>" + body.total_units_processed + "</dd>" +
+        "<dt>Chunks created</dt><dd>" + body.total_chunks_created + "</dd>" +
+        "<dt>Formula-heavy units</dt><dd>" + body.formula_heavy_units + "</dd>" +
+        "<dt>Sparse / image-heavy units</dt><dd>" + body.sparse_or_image_heavy_units + "</dd>" +
+        "</dl>" + warnHtml;
+      document.getElementById("ingest-course").value = body.course_id || course;
+      await refreshCourses(body.course_id || course);
+    } catch (err) {
+      document.getElementById("ingest-err").textContent = String(err.message || err);
+      document.getElementById("ingest-err").classList.add("show");
+    } finally {
+      setBusy(btn, false);
+    }
+  });
+
+  function escapeHtml(s) {
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;");
+  }
+
+  document.getElementById("btn-stats").addEventListener("click", async function () {
+    hideAlerts();
+    var course = document.getElementById("stats-course").value.trim();
+    var pre = document.getElementById("stats-display");
+    if (!course) {
+      document.getElementById("stats-err").textContent = "Select a course.";
+      document.getElementById("stats-err").classList.add("show");
+      return;
+    }
+    var btn = document.getElementById("btn-stats");
+    setBusy(btn, true, "Loading…");
+    try {
+      var res = await fetch(apiBase() + "/courses/" + encodeURIComponent(course) + "/stats");
+      var body = await res.json();
+      if (!res.ok) throw new Error(body.detail || res.statusText);
+      localStorage.setItem(LS_KEY, course);
+      var lines = [];
+      lines.push("course_id: " + body.course_id);
+      lines.push("num_documents: " + body.num_documents);
+      lines.push("num_chunks: " + body.num_chunks);
+      lines.push("lectures: " + (body.lectures && body.lectures.length ? body.lectures.join(", ") : "(none)"));
+      lines.push("indexed_files:");
+      (body.indexed_files || []).forEach(function (f) { lines.push("  - " + f); });
+      lines.push("");
+      lines.push("recent_ingestion:");
+      if (body.recent_ingestion) {
+        var ri = body.recent_ingestion;
+        lines.push("  course_id: " + ri.course_id);
+        lines.push("  documents_ingested: " + ri.documents_ingested);
+        lines.push("  total_units_processed: " + ri.total_units_processed);
+        lines.push("  total_chunks_created: " + ri.total_chunks_created);
+        lines.push("  formula_heavy_units: " + ri.formula_heavy_units);
+        lines.push("  sparse_or_image_heavy_units: " + ri.sparse_or_image_heavy_units);
+        if (ri.warnings && ri.warnings.length) {
+          lines.push("  warnings:");
+          ri.warnings.forEach(function (w) { lines.push("    - " + w); });
+        }
+      } else {
+        lines.push("  (none)");
+      }
+      pre.textContent = lines.join("\n");
+      pre.classList.add("show");
+    } catch (err) {
+      document.getElementById("stats-err").textContent = String(err.message || err);
+      document.getElementById("stats-err").classList.add("show");
+    } finally {
+      setBusy(btn, false);
+    }
+  });
+
+  document.getElementById("form-quiz").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    hideAlerts();
+    var course = document.getElementById("quiz-course").value.trim();
+    var num = parseInt(document.getElementById("quiz-num").value, 10) || 5;
+    var topic = document.getElementById("quiz-topic").value.trim();
+    var diff = document.getElementById("quiz-diff").value;
+    var topk = parseInt(document.getElementById("quiz-topk").value, 10) || 12;
+    var out = document.getElementById("quiz-out");
+    out.innerHTML = "";
+    if (!course) {
+      document.getElementById("quiz-err").textContent = "Select a course.";
+      document.getElementById("quiz-err").classList.add("show");
+      return;
+    }
+    var btn = document.getElementById("btn-quiz");
+    setBusy(btn, true, "Generating…");
+    try {
+      var payload = { num_questions: num, difficulty: diff, top_k: topk };
+      if (topic) payload.topic = topic;
+      var res = await fetch(apiBase() + "/courses/" + encodeURIComponent(course) + "/quiz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      var body = await res.json().catch(function () { return {}; });
+      if (!res.ok) {
+        throw new Error(body.detail ? (typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail)) : res.statusText);
+      }
+      localStorage.setItem(LS_KEY, course);
+      if (body.message) {
+        var qm = document.getElementById("quiz-msg");
+        qm.textContent = body.message;
+        qm.classList.add("show");
+      }
+      if (!body.quiz || !body.quiz.length) {
+        out.innerHTML = "<p class='empty-hint' style='margin-top:0.5rem'>No quiz items returned.</p>";
+        return;
+      }
+      var html = "";
+      body.quiz.forEach(function (item, idx) {
+        html += "<div class='quiz-card'>";
+        html += "<div class='quiz-meta'>Question " + (idx + 1) + "</div>";
+        html += "<h3>" + escapeHtml(item.question) + "</h3>";
+        html += "<div class='quiz-cites'><strong>Sources</strong> — ";
+        var cps = [];
+        (item.citations || []).forEach(function (c) {
+          var bit = escapeHtml(c.source_file);
+          if (c.page != null) bit += ", p. " + c.page;
+          else if (c.slide != null) bit += ", slide " + c.slide;
+          cps.push(bit);
+        });
+        html += cps.length ? cps.join(" · ") : "(none)";
+        html += "</div>";
+        html += "<div class='quiz-answer'><strong>Answer key</strong><br/>" + escapeHtml(item.answer_key) + "</div>";
+        html += "</div>";
+      });
+      out.innerHTML = html;
+    } catch (err) {
+      document.getElementById("quiz-err").textContent = String(err.message || err);
+      document.getElementById("quiz-err").classList.add("show");
+    } finally {
+      setBusy(btn, false);
+    }
+  });
+
+  document.getElementById("form-ask").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    hideAlerts();
+    var course = document.getElementById("ask-course").value.trim();
+    var q = document.getElementById("ask-q").value.trim();
+    var topk = parseInt(document.getElementById("ask-topk").value, 10) || 8;
+    if (!course || !q) return;
+    var btn = document.getElementById("btn-ask");
+    setBusy(btn, true, "Asking…");
+    document.getElementById("ask-answer").classList.remove("show");
+    document.getElementById("ask-cites").style.display = "none";
+    document.getElementById("ask-debug").innerHTML = "";
+    document.getElementById("ask-debug-wrap").open = false;
+    try {
+      var res = await fetch(apiBase() + "/courses/" + encodeURIComponent(course) + "/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: q, top_k: topk })
+      });
+      var body = await res.json();
+      if (!res.ok) throw new Error(body.detail ? (typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail)) : res.statusText);
+      localStorage.setItem(LS_KEY, course);
+      document.getElementById("ask-answer").textContent = body.answer;
+      document.getElementById("ask-answer").classList.add("show");
+      var cites = document.getElementById("ask-cites");
+      if (body.citations && body.citations.length) {
+        var ul = "<strong style='font-size:0.85rem;color:var(--muted)'>Citations</strong><ul>";
+        body.citations.forEach(function (c) {
+          var unit = c.unit_type === "page" ? "p." : "slide ";
+          ul += "<li><strong>" + escapeHtml(c.source_file) + "</strong>, " + unit + c.unit_number + "</li>";
+        });
+        ul += "</ul>";
+        cites.innerHTML = ul;
+        cites.style.display = "block";
+      } else {
+        cites.innerHTML = "<span style='color:var(--muted);font-size:0.85rem'>No citations returned.</span>";
+        cites.style.display = "block";
+      }
+      if (body.debug && body.debug.retrieved_chunks) {
+        var html = "";
+        body.debug.retrieved_chunks.forEach(function (ch, i) {
+          html += "<div class='debug-chunk'>";
+          html += "<div><strong>#" + (i+1) + "</strong> " + escapeHtml(ch.source_file) + " · " + ch.unit_type + " " + ch.unit_number;
+          html += " · hybrid " + (ch.hybrid_score != null ? ch.hybrid_score.toFixed(4) : "?");
+          html += " · dense " + (ch.dense_score != null ? ch.dense_score.toFixed(4) : "?");
+          html += " · bm25 " + (ch.bm25_score != null ? ch.bm25_score.toFixed(4) : "?") + "</div>";
+          html += "<div style='margin-top:0.35rem;opacity:0.92'>" + escapeHtml(ch.preview || "") + "</div>";
+          html += "</div>";
+        });
+        document.getElementById("ask-debug").innerHTML = html || "(empty)";
+      }
+    } catch (err) {
+      document.getElementById("ask-err").textContent = String(err.message || err);
+      document.getElementById("ask-err").classList.add("show");
+    } finally {
+      setBusy(btn, false);
+    }
+  });
+
+  refreshCourses().catch(function (err) {
+    document.getElementById("stats-err").textContent = "Could not load course list: " + err;
+    document.getElementById("stats-err").classList.add("show");
+  });
+})();
+  </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "course_id": "WebTech1",
+  "documents_ingested": 5,
+  "total_units_processed": 345,
+  "total_chunks_created": 345,
+  "formula_heavy_units": 1,
+  "sparse_or_image_heavy_units": 93,
+  "warnings": []
+}
